@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -84,4 +86,13 @@ func (k Keeper) AllWhitelistedAddresses(c context.Context, req *types.QueryAllWh
 	ctx := sdk.UnwrapSDKContext(c)
 	whitelistedAddresses := k.GetAllWhitelistedAddressPairs(ctx)
 	return &types.QueryAllWhitelistedAddressesResponse{AddressPairs: whitelistedAddresses}, nil
+}
+
+// Query module params
+func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }

@@ -4,6 +4,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
@@ -198,4 +199,37 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 		Outflow:      sdkmath.ZeroInt(),
 		ChannelValue: channelValue,
 	})
+}
+
+func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
+	msgServer := keeper.NewMsgServerImpl(s.App.RatelimitKeeper)
+
+	admin := s.TestAccs[0].String()
+
+	// invalid authority
+	_, err := msgServer.UpdateParams(s.Ctx, &types.MsgUpdateParams{
+		Authority: s.TestAccs[1].String(),
+		Params: types.Params{
+			Admins: []string{admin},
+		},
+	})
+	s.Require().ErrorIs(govtypes.ErrInvalidSigner, err)
+
+	// invalid params
+	_, err = msgServer.UpdateParams(s.Ctx, &types.MsgUpdateParams{
+		Authority: authority,
+		Params: types.Params{
+			Admins: []string{"address"},
+		},
+	})
+	s.Require().ErrorIs(errors.ErrInvalidAddress, err)
+
+	// valid
+	_, err = msgServer.UpdateParams(s.Ctx, &types.MsgUpdateParams{
+		Authority: authority,
+		Params: types.Params{
+			Admins: []string{admin},
+		},
+	})
+	s.Require().NoError(err)
 }

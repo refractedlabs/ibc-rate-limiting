@@ -15,6 +15,8 @@ const (
 	TypeMsgUpdateRateLimit = "UpdateRateLimit"
 	TypeMsgRemoveRateLimit = "RemoveRateLimit"
 	TypeMsgResetRateLimit  = "ResetRateLimit"
+
+	TypeMsgUpdateParams = "UpdateParams"
 )
 
 var (
@@ -22,12 +24,14 @@ var (
 	_ sdk.Msg = &MsgUpdateRateLimit{}
 	_ sdk.Msg = &MsgRemoveRateLimit{}
 	_ sdk.Msg = &MsgResetRateLimit{}
+	_ sdk.Msg = &MsgUpdateParams{}
 
 	// Implement legacy interface for ledger support
 	_ legacytx.LegacyMsg = &MsgAddRateLimit{}
 	_ legacytx.LegacyMsg = &MsgUpdateRateLimit{}
 	_ legacytx.LegacyMsg = &MsgRemoveRateLimit{}
 	_ legacytx.LegacyMsg = &MsgResetRateLimit{}
+	_ legacytx.LegacyMsg = &MsgUpdateParams{}
 )
 
 // ----------------------------------------------
@@ -288,4 +292,33 @@ func (msg *MsgResetRateLimit) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+// ----------------------------------------------
+//               MsgUpdateParams
+// ----------------------------------------------
+
+func (msg *MsgUpdateParams) Type() string {
+	return TypeMsgUpdateParams
+}
+
+func (msg *MsgUpdateParams) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgUpdateParams) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg *MsgUpdateParams) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgUpdateParams) ValidateBasic() error {
+	return msg.Params.Validate()
 }

@@ -2,6 +2,7 @@ syntax = "proto3";
 package ratelimit.v1;
 
 import "ratelimit/v1/ratelimit.proto";
+import "ratelimit/v1/params.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 
@@ -51,6 +52,12 @@ service Query {
     option (google.api.http).get =
         "/Stride-Labs/ibc-rate-limiting/ratelimit/whitelisted_addresses";
   }
+
+  // Queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/ibc-rate-limiting/ratelimit/params";
+  }
 }
 
 // Queries all rate limits
@@ -87,4 +94,13 @@ message QueryAllWhitelistedAddressesRequest {}
 message QueryAllWhitelistedAddressesResponse {
   repeated WhitelistedAddressPair address_pairs = 1
       [ (gogoproto.nullable) = false ];
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
 }

@@ -78,3 +78,18 @@ func (k msgServer) ResetRateLimit(goCtx context.Context, msg *types.MsgResetRate
 
 	return &types.MsgResetRateLimitResponse{}, nil
 }
+
+// Updates the module params
+func (k msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if k.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	}
+
+	err := k.Keeper.SetParams(ctx, msg.Params)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUpdateParamsResponse{}, nil
+}

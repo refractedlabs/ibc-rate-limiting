@@ -4,4 +4,6 @@ package ratelimit.v1;
 option go_package = "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types";
 
 // Params defines the ratelimit module's parameters.
-message Params {}
+message Params {
+  repeated string admins = 1;
+}

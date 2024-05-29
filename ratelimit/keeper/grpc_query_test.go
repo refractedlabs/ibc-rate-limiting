@@ -118,3 +118,13 @@ func (s *KeeperTestSuite) TestQueryAllWhitelistedAddresses() {
 	}
 	s.Require().Equal(expectedWhitelist, queryResponse.AddressPairs)
 }
+
+func (s *KeeperTestSuite) TestParamsQuery() {
+	params := types.Params{Admins: []string{s.TestAccs[0].String()}}
+	err := s.App.RatelimitKeeper.SetParams(s.Ctx, params)
+	s.Require().NoError(err)
+
+	response, err := s.QueryClient.Params(context.Background(), &types.QueryParamsRequest{})
+	s.Require().NoError(err)
+	s.Require().Equal(&types.QueryParamsResponse{Params: params}, response)
+}

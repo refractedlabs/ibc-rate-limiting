@@ -5,20 +5,17 @@ import (
 
 	"github.com/cometbft/cometbft/libs/log"
 
+	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-
-	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 )
 
 type (
 	Keeper struct {
-		storeKey   storetypes.StoreKey
-		cdc        codec.BinaryCodec
-		paramstore paramtypes.Subspace
-		authority  string
+		storeKey  storetypes.StoreKey
+		cdc       codec.BinaryCodec
+		authority string
 
 		bankKeeper    types.BankKeeper
 		channelKeeper types.ChannelKeeper
@@ -29,7 +26,6 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	key storetypes.StoreKey,
-	ps paramtypes.Subspace,
 	authority string,
 	bankKeeper types.BankKeeper,
 	channelKeeper types.ChannelKeeper,
@@ -38,7 +34,6 @@ func NewKeeper(
 	return &Keeper{
 		cdc:           cdc,
 		storeKey:      key,
-		paramstore:    ps,
 		authority:     authority,
 		bankKeeper:    bankKeeper,
 		channelKeeper: channelKeeper,
