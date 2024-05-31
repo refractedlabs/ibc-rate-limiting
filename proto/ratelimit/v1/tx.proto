@@ -22,9 +22,11 @@ service Msg {
   // Gov tx to update module params
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
   // Gov tx to set a whitelisted address pair
-  rpc SetWhitelistedAddressPair(MsgSetWhitelistedAddressPair) returns (MsgSetWhitelistedAddressPairResponse);
+  rpc SetWhitelistedAddressPair(MsgSetWhitelistedAddressPair)
+      returns (MsgSetWhitelistedAddressPairResponse);
   // Gov tx to remove a whitelisted address pair
-  rpc RemoveWhitelistedAddressPair(MsgRemoveWhitelistedAddressPair) returns (MsgRemoveWhitelistedAddressPairResponse);
+  rpc RemoveWhitelistedAddressPair(MsgRemoveWhitelistedAddressPair)
+      returns (MsgRemoveWhitelistedAddressPairResponse);
 }
 
 // Gov tx to add a new rate limit
@@ -123,7 +125,7 @@ message MsgUpdateParams {
 
   // Authority defines the x/gov module account
   string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  Params params = 2 [(gogoproto.nullable) = false];
+  Params params = 2 [ (gogoproto.nullable) = false ];
 }
 message MsgUpdateParamsResponse {}
 
