@@ -96,6 +96,10 @@ func (k msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 
 // Sets a whitelisted address pair
 func (k msgServer) SetWhitelistedAddressPair(goCtx context.Context, msg *types.MsgSetWhitelistedAddressPair) (*types.MsgSetWhitelistedAddressPairResponse, error) {
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if k.authority != msg.Authority {
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
@@ -113,6 +117,10 @@ func (k msgServer) SetWhitelistedAddressPair(goCtx context.Context, msg *types.M
 
 // Removes a whitelisted address pair
 func (k msgServer) RemoveWhitelistedAddressPair(goCtx context.Context, msg *types.MsgRemoveWhitelistedAddressPair) (*types.MsgRemoveWhitelistedAddressPairResponse, error) {
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if k.authority != msg.Authority {
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)

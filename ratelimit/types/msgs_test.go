@@ -467,3 +467,190 @@ func TestMsgResetRateLimit(t *testing.T) {
 		})
 	}
 }
+
+// ----------------------------------------------
+//               MsgUpdateParams
+// ----------------------------------------------
+
+func TestMsgUpdateParams(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validAuthority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+	validParams := types.Params{
+		Admins: []string{"stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"},
+	}
+
+	testCases := []struct {
+		name string
+		msg  types.MsgUpdateParams
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgUpdateParams{
+				Authority: validAuthority,
+				Params:    validParams,
+			},
+		},
+		{
+			name: "invalid authority",
+			msg: types.MsgUpdateParams{
+				Authority: "invalid_address",
+				Params:    validParams,
+			},
+			err: "invalid authority",
+		},
+		{
+			name: "invalid params",
+			msg: types.MsgUpdateParams{
+				Authority: validAuthority,
+				Params:    types.Params{Admins: []string{"invalid_address"}},
+			},
+			err: "invalid admin address",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.err == "" {
+				require.NoError(t, tc.msg.ValidateBasic(), "test: %v", tc.name)
+				require.Equal(t, tc.msg.Type(), types.TypeMsgUpdateParams, "type")
+				require.Equal(t, tc.msg.Route(), types.ModuleName, "route")
+			} else {
+				require.ErrorContains(t, tc.msg.ValidateBasic(), tc.err, "test: %v", tc.name)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------
+//          MsgSetWhitelistedAddressPair
+// ----------------------------------------------
+
+func TestMsgSetWhitelistedAddressPair(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validAuthority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+	validSender := "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
+	validReceiver := "pryzm1hgt2gtxrc0k344w983yxazcdul5mhxkn8vyh90"
+
+	testCases := []struct {
+		name string
+		msg  types.MsgSetWhitelistedAddressPair
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgSetWhitelistedAddressPair{
+				Authority: validAuthority,
+				Sender:    validSender,
+				Receiver:  validReceiver,
+			},
+		},
+		{
+			name: "invalid authority",
+			msg: types.MsgSetWhitelistedAddressPair{
+				Authority: "invalid_address",
+				Sender:    validSender,
+				Receiver:  validReceiver,
+			},
+			err: "invalid authority",
+		},
+		{
+			name: "invalid sender",
+			msg: types.MsgSetWhitelistedAddressPair{
+				Authority: validAuthority,
+				Sender:    "invalid_address",
+				Receiver:  validReceiver,
+			},
+			err: "invalid sender address",
+		},
+		{
+			name: "invalid receiver",
+			msg: types.MsgSetWhitelistedAddressPair{
+				Authority: validAuthority,
+				Sender:    validSender,
+				Receiver:  "",
+			},
+			err: "invalid receiver address",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.err == "" {
+				require.NoError(t, tc.msg.ValidateBasic(), "test: %v", tc.name)
+				require.Equal(t, tc.msg.Type(), types.TypeMsgSetWhitelistedAddressPair, "type")
+				require.Equal(t, tc.msg.Route(), types.ModuleName, "route")
+			} else {
+				require.ErrorContains(t, tc.msg.ValidateBasic(), tc.err, "test: %v", tc.name)
+			}
+		})
+	}
+}
+
+// ----------------------------------------------
+//        MsgRemoveWhitelistedAddressPair
+// ----------------------------------------------
+
+func TestMsgRemoveWhitelistedAddressPair(t *testing.T) {
+	apptesting.SetupConfig()
+
+	validAuthority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+	validSender := "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
+	validReceiver := "pryzm1hgt2gtxrc0k344w983yxazcdul5mhxkn8vyh90"
+
+	testCases := []struct {
+		name string
+		msg  types.MsgRemoveWhitelistedAddressPair
+		err  string
+	}{
+		{
+			name: "successful message",
+			msg: types.MsgRemoveWhitelistedAddressPair{
+				Authority: validAuthority,
+				Sender:    validSender,
+				Receiver:  validReceiver,
+			},
+		},
+		{
+			name: "invalid authority",
+			msg: types.MsgRemoveWhitelistedAddressPair{
+				Authority: "invalid_address",
+				Sender:    validSender,
+				Receiver:  validReceiver,
+			},
+			err: "invalid authority",
+		},
+		{
+			name: "invalid sender",
+			msg: types.MsgRemoveWhitelistedAddressPair{
+				Authority: validAuthority,
+				Sender:    "invalid_address",
+				Receiver:  validReceiver,
+			},
+			err: "invalid sender address",
+		},
+		{
+			name: "invalid receiver",
+			msg: types.MsgRemoveWhitelistedAddressPair{
+				Authority: validAuthority,
+				Sender:    validSender,
+				Receiver:  "",
+			},
+			err: "invalid receiver address",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.err == "" {
+				require.NoError(t, tc.msg.ValidateBasic(), "test: %v", tc.name)
+				require.Equal(t, tc.msg.Type(), types.TypeMsgRemoveWhitelistedAddressPair, "type")
+				require.Equal(t, tc.msg.Route(), types.ModuleName, "route")
+			} else {
+				require.ErrorContains(t, tc.msg.ValidateBasic(), tc.err, "test: %v", tc.name)
+			}
+		})
+	}
+}

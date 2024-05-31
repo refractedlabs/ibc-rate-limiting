@@ -322,6 +322,10 @@ func (msg *MsgUpdateParams) GetSignBytes() []byte {
 }
 
 func (msg *MsgUpdateParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid authority address (%s)", err)
+	}
+
 	return msg.Params.Validate()
 }
 
@@ -351,11 +355,14 @@ func (msg *MsgSetWhitelistedAddressPair) GetSignBytes() []byte {
 }
 
 func (msg *MsgSetWhitelistedAddressPair) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid authority address (%s)", err)
+	}
 	if _, err := getAccountAddress(msg.Sender); err != nil {
-		return err
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address %s: %s", msg.Sender, err.Error())
 	}
 	if _, err := getAccountAddress(msg.Receiver); err != nil {
-		return err
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid receiver address %s: %s", msg.Receiver, err.Error())
 	}
 	return nil
 }
@@ -386,11 +393,14 @@ func (msg *MsgRemoveWhitelistedAddressPair) GetSignBytes() []byte {
 }
 
 func (msg *MsgRemoveWhitelistedAddressPair) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid authority address (%s)", err)
+	}
 	if _, err := getAccountAddress(msg.Sender); err != nil {
-		return err
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address %s: %s", msg.Sender, err.Error())
 	}
 	if _, err := getAccountAddress(msg.Receiver); err != nil {
-		return err
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid receiver address %s: %s", msg.Receiver, err.Error())
 	}
 	return nil
 }
