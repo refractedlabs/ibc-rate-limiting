@@ -93,3 +93,32 @@ func (k msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParam
 
 	return &types.MsgUpdateParamsResponse{}, nil
 }
+
+// Sets a whitelisted address pair
+func (k msgServer) SetWhitelistedAddressPair(goCtx context.Context, msg *types.MsgSetWhitelistedAddressPair) (*types.MsgSetWhitelistedAddressPairResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if k.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	}
+
+	k.Keeper.SetWhitelistedAddressPair(ctx,
+		types.WhitelistedAddressPair{
+			Sender:   msg.Sender,
+			Receiver: msg.Receiver,
+		},
+	)
+
+	return &types.MsgSetWhitelistedAddressPairResponse{}, nil
+}
+
+// Removes a whitelisted address pair
+func (k msgServer) RemoveWhitelistedAddressPair(goCtx context.Context, msg *types.MsgRemoveWhitelistedAddressPair) (*types.MsgRemoveWhitelistedAddressPairResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if k.authority != msg.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	}
+
+	k.Keeper.RemoveWhitelistedAddressPair(ctx, msg.Sender, msg.Receiver)
+
+	return &types.MsgRemoveWhitelistedAddressPairResponse{}, nil
+}

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"regexp"
 
 	errorsmod "cosmossdk.io/errors"
@@ -11,12 +12,13 @@ import (
 )
 
 const (
-	TypeMsgAddRateLimit    = "AddRateLimit"
-	TypeMsgUpdateRateLimit = "UpdateRateLimit"
-	TypeMsgRemoveRateLimit = "RemoveRateLimit"
-	TypeMsgResetRateLimit  = "ResetRateLimit"
-
-	TypeMsgUpdateParams = "UpdateParams"
+	TypeMsgAddRateLimit                 = "AddRateLimit"
+	TypeMsgUpdateRateLimit              = "UpdateRateLimit"
+	TypeMsgRemoveRateLimit              = "RemoveRateLimit"
+	TypeMsgResetRateLimit               = "ResetRateLimit"
+	TypeMsgUpdateParams                 = "UpdateParams"
+	TypeMsgSetWhitelistedAddressPair    = "SetWhitelistedAddressPair"
+	TypeMsgRemoveWhitelistedAddressPair = "RemoveWhitelistedAddressPair"
 )
 
 var (
@@ -321,4 +323,87 @@ func (msg *MsgUpdateParams) GetSignBytes() []byte {
 
 func (msg *MsgUpdateParams) ValidateBasic() error {
 	return msg.Params.Validate()
+}
+
+// ----------------------------------------------
+//          MsgSetWhitelistedAddressPair
+// ----------------------------------------------
+
+func (msg *MsgSetWhitelistedAddressPair) Type() string {
+	return TypeMsgSetWhitelistedAddressPair
+}
+
+func (msg *MsgSetWhitelistedAddressPair) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgSetWhitelistedAddressPair) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg *MsgSetWhitelistedAddressPair) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgSetWhitelistedAddressPair) ValidateBasic() error {
+	if _, err := getAccountAddress(msg.Sender); err != nil {
+		return err
+	}
+	if _, err := getAccountAddress(msg.Receiver); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ----------------------------------------------
+//        MsgRemoveWhitelistedAddressPair
+// ----------------------------------------------
+
+func (msg *MsgRemoveWhitelistedAddressPair) Type() string {
+	return TypeMsgRemoveWhitelistedAddressPair
+}
+
+func (msg *MsgRemoveWhitelistedAddressPair) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgRemoveWhitelistedAddressPair) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg *MsgRemoveWhitelistedAddressPair) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgRemoveWhitelistedAddressPair) ValidateBasic() error {
+	if _, err := getAccountAddress(msg.Sender); err != nil {
+		return err
+	}
+	if _, err := getAccountAddress(msg.Receiver); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getAccountAddress(bech32Address string) (sdk.AccAddress, error) {
+	_, bz, err := bech32.DecodeAndConvert(bech32Address)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(bz) == 0 {
+		return nil, sdkerrors.ErrInvalidAddress.Wrap("address cannot be empty")
+	}
+
+	return bz, nil
 }
