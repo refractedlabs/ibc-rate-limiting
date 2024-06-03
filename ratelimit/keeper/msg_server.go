@@ -2,9 +2,11 @@ package keeper
 
 import (
 	"context"
+	"slices"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
@@ -24,8 +26,8 @@ var _ types.MsgServer = msgServer{}
 // Adds a new rate limit. Fails if the rate limit already exists or the channel value is 0
 func (k msgServer) AddRateLimit(goCtx context.Context, msg *types.MsgAddRateLimit) (*types.MsgAddRateLimitResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if k.authority != msg.Authority {
-		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	if err := k.assertGovOrAdmin(ctx, msg.Authority); err != nil {
+		return nil, err
 	}
 
 	if err := k.Keeper.AddRateLimit(ctx, msg); err != nil {
@@ -38,8 +40,8 @@ func (k msgServer) AddRateLimit(goCtx context.Context, msg *types.MsgAddRateLimi
 // Updates an existing rate limit. Fails if the rate limit doesn't exist
 func (k msgServer) UpdateRateLimit(goCtx context.Context, msg *types.MsgUpdateRateLimit) (*types.MsgUpdateRateLimitResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if k.authority != msg.Authority {
-		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	if err := k.assertGovOrAdmin(ctx, msg.Authority); err != nil {
+		return nil, err
 	}
 
 	if err := k.Keeper.UpdateRateLimit(ctx, msg); err != nil {
@@ -52,8 +54,8 @@ func (k msgServer) UpdateRateLimit(goCtx context.Context, msg *types.MsgUpdateRa
 // Removes a rate limit. Fails if the rate limit doesn't exist
 func (k msgServer) RemoveRateLimit(goCtx context.Context, msg *types.MsgRemoveRateLimit) (*types.MsgRemoveRateLimitResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if k.authority != msg.Authority {
-		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	if err := k.assertGovOrAdmin(ctx, msg.Authority); err != nil {
+		return nil, err
 	}
 
 	_, found := k.Keeper.GetRateLimit(ctx, msg.Denom, msg.ChannelId)
@@ -68,8 +70,8 @@ func (k msgServer) RemoveRateLimit(goCtx context.Context, msg *types.MsgRemoveRa
 // Resets the flow on a rate limit. Fails if the rate limit doesn't exist
 func (k msgServer) ResetRateLimit(goCtx context.Context, msg *types.MsgResetRateLimit) (*types.MsgResetRateLimitResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if k.authority != msg.Authority {
-		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	if err := k.assertGovOrAdmin(ctx, msg.Authority); err != nil {
+		return nil, err
 	}
 
 	if err := k.Keeper.ResetRateLimit(ctx, msg.Denom, msg.ChannelId); err != nil {
@@ -101,8 +103,8 @@ func (k msgServer) SetWhitelistedAddressPair(goCtx context.Context, msg *types.M
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if k.authority != msg.Authority {
-		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	if err := k.assertGovOrAdmin(ctx, msg.Authority); err != nil {
+		return nil, err
 	}
 
 	k.Keeper.SetWhitelistedAddressPair(ctx,
@@ -122,11 +124,22 @@ func (k msgServer) RemoveWhitelistedAddressPair(goCtx context.Context, msg *type
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if k.authority != msg.Authority {
-		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.authority, msg.Authority)
+	if err := k.assertGovOrAdmin(ctx, msg.Authority); err != nil {
+		return nil, err
 	}
 
 	k.Keeper.RemoveWhitelistedAddressPair(ctx, msg.Sender, msg.Receiver)
 
 	return &types.MsgRemoveWhitelistedAddressPairResponse{}, nil
+}
+
+func (k msgServer) assertGovOrAdmin(ctx sdk.Context, address string) error {
+	if k.authority == address {
+		return nil
+	}
+	admins := k.GetParams(ctx).Admins
+	if !slices.Contains(admins, address) {
+		return errortypes.ErrorInvalidSigner.Wrapf("invalid authority; expected gov or admin address, got %s", address)
+	}
+	return nil
 }

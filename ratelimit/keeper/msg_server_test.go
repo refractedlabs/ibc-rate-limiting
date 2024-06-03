@@ -246,7 +246,7 @@ func (s *KeeperTestSuite) TestMsgServer_SetWhitelistedAddressPair() {
 		Sender:    validSender,
 		Receiver:  validReceiver,
 	})
-	s.Require().ErrorIs(govtypes.ErrInvalidSigner, err)
+	s.Require().ErrorIs(errors.ErrorInvalidSigner, err)
 
 	// invalid sender
 	_, err = msgServer.SetWhitelistedAddressPair(s.Ctx, &types.MsgSetWhitelistedAddressPair{
@@ -276,13 +276,20 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveWhitelistedAddressPair() {
 	validSender := "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 	validReceiver := "pryzm1hgt2gtxrc0k344w983yxazcdul5mhxkn8vyh90"
 
+	admin := s.TestAccs[0].String()
+	_, err := msgServer.UpdateParams(s.Ctx, &types.MsgUpdateParams{
+		Authority: authority,
+		Params:    types.Params{Admins: []string{admin}},
+	})
+	s.Require().NoError(err)
+
 	// invalid authority
-	_, err := msgServer.RemoveWhitelistedAddressPair(s.Ctx, &types.MsgRemoveWhitelistedAddressPair{
+	_, err = msgServer.RemoveWhitelistedAddressPair(s.Ctx, &types.MsgRemoveWhitelistedAddressPair{
 		Authority: s.TestAccs[1].String(),
 		Sender:    validSender,
 		Receiver:  validReceiver,
 	})
-	s.Require().ErrorIs(govtypes.ErrInvalidSigner, err)
+	s.Require().ErrorIs(errors.ErrorInvalidSigner, err)
 
 	// invalid sender
 	_, err = msgServer.RemoveWhitelistedAddressPair(s.Ctx, &types.MsgRemoveWhitelistedAddressPair{
@@ -301,7 +308,7 @@ func (s *KeeperTestSuite) TestMsgServer_RemoveWhitelistedAddressPair() {
 	s.Require().NoError(err)
 
 	_, err = msgServer.SetWhitelistedAddressPair(s.Ctx, &types.MsgSetWhitelistedAddressPair{
-		Authority: authority,
+		Authority: admin,
 		Sender:    validSender,
 		Receiver:  validReceiver,
 	})
