@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"regexp"
 
 	errorsmod "cosmossdk.io/errors"
@@ -11,10 +12,13 @@ import (
 )
 
 const (
-	TypeMsgAddRateLimit    = "AddRateLimit"
-	TypeMsgUpdateRateLimit = "UpdateRateLimit"
-	TypeMsgRemoveRateLimit = "RemoveRateLimit"
-	TypeMsgResetRateLimit  = "ResetRateLimit"
+	TypeMsgAddRateLimit                 = "AddRateLimit"
+	TypeMsgUpdateRateLimit              = "UpdateRateLimit"
+	TypeMsgRemoveRateLimit              = "RemoveRateLimit"
+	TypeMsgResetRateLimit               = "ResetRateLimit"
+	TypeMsgUpdateParams                 = "UpdateParams"
+	TypeMsgSetWhitelistedAddressPair    = "SetWhitelistedAddressPair"
+	TypeMsgRemoveWhitelistedAddressPair = "RemoveWhitelistedAddressPair"
 )
 
 var (
@@ -22,12 +26,14 @@ var (
 	_ sdk.Msg = &MsgUpdateRateLimit{}
 	_ sdk.Msg = &MsgRemoveRateLimit{}
 	_ sdk.Msg = &MsgResetRateLimit{}
+	_ sdk.Msg = &MsgUpdateParams{}
 
 	// Implement legacy interface for ledger support
 	_ legacytx.LegacyMsg = &MsgAddRateLimit{}
 	_ legacytx.LegacyMsg = &MsgUpdateRateLimit{}
 	_ legacytx.LegacyMsg = &MsgRemoveRateLimit{}
 	_ legacytx.LegacyMsg = &MsgResetRateLimit{}
+	_ legacytx.LegacyMsg = &MsgUpdateParams{}
 )
 
 // ----------------------------------------------
@@ -288,4 +294,126 @@ func (msg *MsgResetRateLimit) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+// ----------------------------------------------
+//               MsgUpdateParams
+// ----------------------------------------------
+
+func (msg *MsgUpdateParams) Type() string {
+	return TypeMsgUpdateParams
+}
+
+func (msg *MsgUpdateParams) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgUpdateParams) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg *MsgUpdateParams) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgUpdateParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid authority address (%s)", err)
+	}
+
+	return msg.Params.Validate()
+}
+
+// ----------------------------------------------
+//          MsgSetWhitelistedAddressPair
+// ----------------------------------------------
+
+func (msg *MsgSetWhitelistedAddressPair) Type() string {
+	return TypeMsgSetWhitelistedAddressPair
+}
+
+func (msg *MsgSetWhitelistedAddressPair) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgSetWhitelistedAddressPair) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg *MsgSetWhitelistedAddressPair) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgSetWhitelistedAddressPair) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid authority address (%s)", err)
+	}
+	if _, err := getAccountAddress(msg.Sender); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address %s: %s", msg.Sender, err.Error())
+	}
+	if _, err := getAccountAddress(msg.Receiver); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid receiver address %s: %s", msg.Receiver, err.Error())
+	}
+	return nil
+}
+
+// ----------------------------------------------
+//        MsgRemoveWhitelistedAddressPair
+// ----------------------------------------------
+
+func (msg *MsgRemoveWhitelistedAddressPair) Type() string {
+	return TypeMsgRemoveWhitelistedAddressPair
+}
+
+func (msg *MsgRemoveWhitelistedAddressPair) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgRemoveWhitelistedAddressPair) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg *MsgRemoveWhitelistedAddressPair) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgRemoveWhitelistedAddressPair) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid authority address (%s)", err)
+	}
+	if _, err := getAccountAddress(msg.Sender); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid sender address %s: %s", msg.Sender, err.Error())
+	}
+	if _, err := getAccountAddress(msg.Receiver); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid receiver address %s: %s", msg.Receiver, err.Error())
+	}
+	return nil
+}
+
+func getAccountAddress(bech32Address string) (sdk.AccAddress, error) {
+	_, bz, err := bech32.DecodeAndConvert(bech32Address)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(bz) == 0 {
+		return nil, sdkerrors.ErrInvalidAddress.Wrap("address cannot be empty")
+	}
+
+	return bz, nil
 }

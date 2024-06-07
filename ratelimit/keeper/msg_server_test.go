@@ -4,6 +4,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
@@ -198,4 +199,133 @@ func (s *KeeperTestSuite) TestMsgServer_ResetRateLimit() {
 		Outflow:      sdkmath.ZeroInt(),
 		ChannelValue: channelValue,
 	})
+}
+
+func (s *KeeperTestSuite) TestMsgServer_UpdateParams() {
+	msgServer := keeper.NewMsgServerImpl(s.App.RatelimitKeeper)
+
+	admin := s.TestAccs[0].String()
+
+	// invalid authority
+	_, err := msgServer.UpdateParams(s.Ctx, &types.MsgUpdateParams{
+		Authority: s.TestAccs[1].String(),
+		Params: types.Params{
+			Admins: []string{admin},
+		},
+	})
+	s.Require().ErrorIs(govtypes.ErrInvalidSigner, err)
+
+	// invalid params
+	_, err = msgServer.UpdateParams(s.Ctx, &types.MsgUpdateParams{
+		Authority: authority,
+		Params: types.Params{
+			Admins: []string{"address"},
+		},
+	})
+	s.Require().ErrorIs(errors.ErrInvalidAddress, err)
+
+	// valid
+	_, err = msgServer.UpdateParams(s.Ctx, &types.MsgUpdateParams{
+		Authority: authority,
+		Params: types.Params{
+			Admins: []string{admin},
+		},
+	})
+	s.Require().NoError(err)
+}
+
+func (s *KeeperTestSuite) TestMsgServer_SetWhitelistedAddressPair() {
+	msgServer := keeper.NewMsgServerImpl(s.App.RatelimitKeeper)
+
+	validSender := "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
+	validReceiver := "pryzm1hgt2gtxrc0k344w983yxazcdul5mhxkn8vyh90"
+
+	// invalid authority
+	_, err := msgServer.SetWhitelistedAddressPair(s.Ctx, &types.MsgSetWhitelistedAddressPair{
+		Authority: s.TestAccs[1].String(),
+		Sender:    validSender,
+		Receiver:  validReceiver,
+	})
+	s.Require().ErrorIs(errors.ErrorInvalidSigner, err)
+
+	// invalid sender
+	_, err = msgServer.SetWhitelistedAddressPair(s.Ctx, &types.MsgSetWhitelistedAddressPair{
+		Authority: authority,
+		Sender:    "",
+		Receiver:  validReceiver,
+	})
+	s.Require().ErrorIs(errors.ErrInvalidAddress, err)
+
+	// valid
+	_, err = msgServer.SetWhitelistedAddressPair(s.Ctx, &types.MsgSetWhitelistedAddressPair{
+		Authority: authority,
+		Sender:    validSender,
+		Receiver:  validReceiver,
+	})
+	s.Require().NoError(err)
+
+	pairs := s.App.RatelimitKeeper.GetAllWhitelistedAddressPairs(s.Ctx)
+	s.Require().Len(pairs, 1)
+	s.Require().EqualValues(validSender, pairs[0].Sender)
+	s.Require().EqualValues(validReceiver, pairs[0].Receiver)
+}
+
+func (s *KeeperTestSuite) TestMsgServer_RemoveWhitelistedAddressPair() {
+	msgServer := keeper.NewMsgServerImpl(s.App.RatelimitKeeper)
+
+	validSender := "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
+	validReceiver := "pryzm1hgt2gtxrc0k344w983yxazcdul5mhxkn8vyh90"
+
+	admin := s.TestAccs[0].String()
+	_, err := msgServer.UpdateParams(s.Ctx, &types.MsgUpdateParams{
+		Authority: authority,
+		Params:    types.Params{Admins: []string{admin}},
+	})
+	s.Require().NoError(err)
+
+	// invalid authority
+	_, err = msgServer.RemoveWhitelistedAddressPair(s.Ctx, &types.MsgRemoveWhitelistedAddressPair{
+		Authority: s.TestAccs[1].String(),
+		Sender:    validSender,
+		Receiver:  validReceiver,
+	})
+	s.Require().ErrorIs(errors.ErrorInvalidSigner, err)
+
+	// invalid sender
+	_, err = msgServer.RemoveWhitelistedAddressPair(s.Ctx, &types.MsgRemoveWhitelistedAddressPair{
+		Authority: authority,
+		Sender:    "",
+		Receiver:  validReceiver,
+	})
+	s.Require().ErrorIs(errors.ErrInvalidAddress, err)
+
+	// valid
+	_, err = msgServer.RemoveWhitelistedAddressPair(s.Ctx, &types.MsgRemoveWhitelistedAddressPair{
+		Authority: authority,
+		Sender:    validSender,
+		Receiver:  validReceiver,
+	})
+	s.Require().NoError(err)
+
+	_, err = msgServer.SetWhitelistedAddressPair(s.Ctx, &types.MsgSetWhitelistedAddressPair{
+		Authority: admin,
+		Sender:    validSender,
+		Receiver:  validReceiver,
+	})
+	s.Require().NoError(err)
+
+	pairs := s.App.RatelimitKeeper.GetAllWhitelistedAddressPairs(s.Ctx)
+	s.Require().Len(pairs, 1)
+	s.Require().EqualValues(validSender, pairs[0].Sender)
+	s.Require().EqualValues(validReceiver, pairs[0].Receiver)
+
+	_, err = msgServer.RemoveWhitelistedAddressPair(s.Ctx, &types.MsgRemoveWhitelistedAddressPair{
+		Authority: authority,
+		Sender:    validSender,
+		Receiver:  validReceiver,
+	})
+	s.Require().NoError(err)
+
+	pairs = s.App.RatelimitKeeper.GetAllWhitelistedAddressPairs(s.Ctx)
+	s.Require().Empty(pairs)
 }

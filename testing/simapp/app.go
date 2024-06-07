@@ -444,7 +444,6 @@ func NewSimApp(
 	app.RatelimitKeeper = *ratelimitkeeper.NewKeeper(
 		appCodec,
 		keys[ratelimittypes.StoreKey],
-		app.GetSubspace(ratelimittypes.ModuleName),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,

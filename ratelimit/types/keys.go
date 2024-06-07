@@ -28,6 +28,8 @@ var (
 	HourEpochKey              = KeyPrefix("hour-epoch")
 
 	PendingSendPacketChannelLength int = 16
+
+	ParamsKey = KeyPrefix("params")
 )
 
 // Get the rate limit byte key built from the denom and channelId

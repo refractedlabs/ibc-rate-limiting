@@ -44,6 +44,7 @@ func (s *KeeperTestSuite) TestGenesis() {
 		{
 			name: "valid custom state",
 			genesisState: types.GenesisState{
+				Params:     types.Params{Admins: []string{"stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"}},
 				RateLimits: createRateLimits(),
 				WhitelistedAddressPairs: []types.WhitelistedAddressPair{
 					{Sender: "senderA", Receiver: "receiverA"},
